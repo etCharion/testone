@@ -419,15 +419,14 @@
         .sidebar {
             width: 260px;
             flex-shrink: 0;
-            /* Remove sticky positioning so the scoreboard aligns directly with the grid's top.
-             * Instead of sticking to the viewport, it will scroll with the content and
-             * start at the same vertical offset as the card grid. */
-            /* position: sticky;
-            top: 20px; */
-            /* Align the sidebar with the top of the grid */
-            align-self: flex-start;
-            /* Match the grid's top padding to align the first score card with the first row */
-            margin-top: 20px;
+    /* Display the sidebar as a column so that the scoreboard sits at the top and
+     * the control buttons can be pushed to the bottom. */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    /* Align the sidebar with the top of the grid. A slightly larger top margin
+     * ensures the first score card aligns with the first row of cards. */
+    margin-top: 40px;
         }
         .content { flex: 1; min-width: 0; }
         /* Scoreboard styling in side column */
@@ -469,14 +468,32 @@
             background-color: #4c51bf;
             color: white;
             border: none;
-            padding: 6px 10px;
-            border-radius: 50%;
-            font-size: 1.2rem;
+            /* Smaller padding and rounded corners instead of a circle */
+            padding: 4px 8px;
+            border-radius: 8px;
+            /* Reduce the font size so the button fits neatly in the sidebar */
+            font-size: 0.85rem;
             cursor: pointer;
             box-shadow: 0 3px 7px rgba(0,0,0,0.1);
         }
         .help-button:hover {
             background-color: #3f44a9;
+        }
+        /* Style adjustments for the sidebar button container and the end game button */
+        #sidebar-buttons {
+            gap: 6px;
+            /* Push the help and end buttons to the bottom of the sidebar so they align
+             * with the last row of cards.  Flexbox makes the container fill available
+             * height and margin-top:auto pushes the buttons down. */
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        #end-game-button {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            white-space: nowrap;
         }
         /* The end game button uses the existing restart-button styles to be consistent */
 
@@ -492,7 +509,7 @@
           <span class="remaining-cards-display hidden" id="remaining-cards-display">Zbývá: -- kartiček</span>
         </div>
         <!-- Buttons for help and ending the game. Initially hidden; shown during gameplay. -->
-        <div id="sidebar-buttons" class="hidden" style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+        <div id="sidebar-buttons" class="hidden">
           <button id="help-button" class="help-button" title="Jak se hraje?">?</button>
           <button id="end-game-button" class="restart-button">Ukončit a vyhodnotit</button>
         </div>
@@ -1013,7 +1030,7 @@ window.updateScoreDisplay();
                     <p class="mb-4">Když odpovíte na otázku, tato kartička a kartička v pravém dolním rohu se z herní mřížky odstraní. Ostatní kartičky se posunou po řádcích doleva a dolů. V levém horním rohu se přidají dvě nové kartičky.</p>
                     <p class="mb-2"><strong>Bodování:</strong></p>
                     <p>Za správnou odpověď získáte +1 bod, za špatnou -1 bod. Bonusové body se přičítají podle obtížnosti otázky (0–2 body podle barvy kartičky) a podle řádku, ve kterém se kartička nachází (řádek 1: 0 bodů, řádek 2: +1 bod, řádek 3: +2 body).</p>
-                    <img src="card_movement_diagram.png" alt="Diagram pohybu kartiček" style="max-width: 100%; margin-top: 1rem; border-radius: 4px; border: 1px solid #e2e8f0; padding: 4px;" />
+                    <img src="./card_movement_diagram.png" alt="Diagram pohybu kartiček" style="max-width: 100%; margin-top: 1rem; border-radius: 4px; border: 1px solid #e2e8f0; padding: 4px;" />
                 </div>
             `;
             showGameModal("Jak se hraje?", helpContent, "Zavřít", () => {});
