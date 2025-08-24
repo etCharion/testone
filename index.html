@@ -410,7 +410,11 @@
             flex-shrink: 0;
             position: sticky;
             top: 20px;
-            align-self: stretch;
+            /* Align the sidebar with the top of the grid.
+             * Stretching the sidebar made it vertically centered relative to the content,
+             * which caused the names panel to sit lower than the card grid.
+             * Using flex-start keeps the top edges aligned. */
+            align-self: flex-start;
         }
         .content { flex: 1; min-width: 0; }
         /* Scoreboard styling in side column */
@@ -1338,35 +1342,50 @@ window.updateScoreDisplay();
                 return;
             }
 
-            const answeredCardGridId = currentQuestion.uniqueGridId; 
+            const answeredCardGridId = currentQuestion.uniqueGridId;
 
+            // Remove the answered card from its position
             availableCards.splice(answeredCardGridId, 1);
 
-            const newCardData = getNextAvailableFlashcardData();
-
-            let newCardObject;
-            if (answeredCardsTotal < TOTAL_CARDS_TO_ANSWER && newCardData) {
-                newCardObject = {
-                    uniqueGridId: -1,
-                    originalIndex: newCardData.originalIndex,
-                    data: newCardData.data,
-                    answered: false
-                };
-            } else {
-                newCardObject = {
-                    uniqueGridId: -1,
-                    originalIndex: -1,
-                    data: { question: "", answer: "", options: [], difficulty: 0 },
-                    answered: true
-                };
+            // Additionally remove the last card in the grid (bottom‑right slot)
+            // This implements the new behaviour: each round the bottom‑right card
+            // is discarded along with the answered card.
+            if (availableCards.length > 0) {
+                availableCards.pop();
             }
 
-            availableCards.unshift(newCardObject);
+            // We need to add two new cards at the beginning of the array.
+            // One to replace the answered card, and a second for the removed last card.
+            // We insert them in reverse order so that the first unshift call ends up at index 0.
+            for (let i = 0; i < 2; i++) {
+                const newCardData = getNextAvailableFlashcardData();
+                let newCardObject;
+                if (answeredCardsTotal < TOTAL_CARDS_TO_ANSWER && newCardData) {
+                    newCardObject = {
+                        uniqueGridId: -1,
+                        originalIndex: newCardData.originalIndex,
+                        data: newCardData.data,
+                        answered: false
+                    };
+                } else {
+                    // Use a placeholder card when there are no more unique cards or the game is over.
+                    newCardObject = {
+                        uniqueGridId: -1,
+                        originalIndex: -1,
+                        data: { question: "", answer: "", options: [], difficulty: 0 },
+                        answered: true
+                    };
+                }
+                availableCards.unshift(newCardObject);
+            }
 
+            // Ensure the array size stays at 9 (3x3 grid). Normally, after removing two cards
+            // and adding two, the length will already be 9. This check is defensive.
             if (availableCards.length > 9) {
-                 availableCards.pop();
+                availableCards.length = 9;
             }
 
+            // Reassign uniqueGridId based on the new positions
             availableCards.forEach((card, index) => {
                 card.uniqueGridId = index;
             });
