@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opakovací hra s kartičkami</title>
+    <!-- Favicon using an emoji -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💡</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .game-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 50px;
+        }
+        /* New wrapper for row bonus indicators and card grid */
+        .grid-layout-wrapper {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding-top: 20px;
+            position: relative;
+            width: 100%;
+        }
+        .row-bonus-indicators {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            font-weight: bold;
+            color: #4a5568;
+            text-align: center;
+            width: 30px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            border-right: 2px solid #cbd5e0;
+            padding-right: 5px;
+            align-self: stretch;
+            position: absolute;
+            left: 0;
+            top: 20px;
+            bottom: 0;
+            transform-origin: center center;
+        }
+        .row-bonus-indicator-item {
+            font-size: 0.9rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            position: relative;
+            height: 100%;
+        }
+        .row-bonus-indicator-item span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            transform-origin: center center;
+            white-space: nowrap;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            flex-grow: 1;
+            margin-top: 0;
+            margin-left: 50px;
+        }
+        .card {
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+            position: relative;
+            font-weight: bold;
+            color: #2d3748;
+            font-size: 1rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .card:hover:not(.selected):not(.answered) {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        .card.selected {
+            border: 4px solid #4299e1;
+            cursor: not-allowed;
+        }
+        .card.answered {
+            background-color: #cbd5e0 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .card.difficulty-1-color { background-color: #d1fae5; }
+        .card.difficulty-2-color { background-color: #fefcbf; }
+        .card.difficulty-3-color { background-color: #fee2e2; }
+        .difficulty-indicator {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            font-size: 0.75rem;
+            color: #4a5568;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .question-area {
+            background-color: #edf2f7;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 20px;
+            text-align: left;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .option-button {
+            background-color: #63b3ed;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        .option-button:hover {
+            background-color: #4299e1;
+            transform: translateY(-2px);
+        }
+        .option-button.correct {
+            background-color: #48bb78;
+        }
+        .option-button.incorrect {
+            background-color: #f56565;
+        }
+        .feedback-message {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .start-button, .restart-button {
+            background-color: #4c51bf;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+            width: fit-content;
+            align-self: center;
+        }
+        .start-button:hover, .restart-button:hover {
+            background-color: #3f44a9;
+            transform: translateY(-2px);
+        }
+        .score-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c5282;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .player-score-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 8px;
+            background-color: #edf2f7;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin: 5px;
+            min-width: 120px;
+            text-align: center;
+        }
+        .player-score-card.current-player {
+            background-color: #d1e7ff;
+            border: 2px solid #007bff;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .player-score-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #2c5282;
+        }
+        .player-score-emoji {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        .player-score-points {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: #2c5282;
+        }
+        .remaining-cards-display {
+            font-size: 1.2rem;
+            color: #4a5568;
+            width: 100%;
+            margin-top: 10px;
+        }
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        .modal-content p {
+            font-size: 1.0rem;
+            color: #4a5568;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+        .modal-content ul {
+            text-align: left;
+            margin-bottom: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f7fafc;
+        }
+        .modal-content li {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #cbd5e0;
+        }
+        .modal-content li:last-child {
+            border-bottom: none;
+        }
+        .modal-content .question-text-small {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        .modal-content .answer-text-small {
+            font-size: 0.95rem;
+            color: #48bb78;
+        }
+        .modal-content .user-answer-text-small {
+            font-size: 0.95rem;
+            color: #f56565;
+        }
+        .modal-buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .modal-button {
+            background-color: #4c51bf;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .modal-button:hover {
+            background-color: #3f44a9;
+        }
+        .modal-button.secondary {
+            background-color: #6c757d;
+        }
+        .modal-button.secondary:hover {
+            background-color: #5a6268;
+        }
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .grid-layout-wrapper {
+                flex-direction: column;
+                align-items: center;
+                padding-top: 10px;
+            }
+            .row-bonus-indicators {
+                position: static;
+                width: 100%;
+                flex-direction: row;
+                justify-content: center;
+                border-right: none;
+                border-bottom: 2px solid #cbd5e0;
+                padding-right: 0;
+                padding-bottom: 10px;
+                align-self: auto;
+                min-height: auto;
+                height: auto;
+            }
+            .row-bonus-indicator-item {
+                border-right: none;
+                justify-content: center;
+                padding: 5px;
+                min-height: auto;
+                flex-grow: 0;
+            }
+            .row-bonus-indicator-item span {
+                position: static;
+                transform: none;
+                white-space: normal;
+            }
+            .grid-container {
+                margin-top: 10px;
+                margin-left: 0;
+            }
+            .card {
+                font-size: 0.9rem;
+                padding: 10px;
+            }
+            .score-display {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .player-score-card {
+                min-width: 100px;
+                padding: 8px 12px;
+            }
+            .modal-content {
+                max-height: 80vh;
+            }
+        }
+        /* Two-column layout for desktop */
+        .game-container { max-width: 1200px; }
+        .main-layout { display: flex; gap: 24px; align-items: flex-start; }
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 20px;
+            align-self: stretch;
+        }
+        .content { flex: 1; min-width: 0; }
+        /* Scoreboard styling in side column */
+        .score-display--side {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            gap: 12px;
+        }
+        .score-display--side .player-score-card { width: 100%; }
+        .score-display--side .remaining-cards-display { width: 100%; text-align: center; margin-top: 6px; }
+        /* Responsive: revert to top layout on tablets/mobile */
+        @media (max-width: 1024px) {
+            .main-layout { flex-direction: column; }
+            .sidebar { position: static; width: 100%; }
+            .score-display--side {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 20px;
+            }
+            .score-display--side .player-score-card { width: auto; min-width: 120px; }
+        }
+    </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="text-4xl font-extrabold text-blue-800 mb-6"></div>
+    <div class="main-layout">
+      <!-- Sidebar: scoreboard -->
+      <aside class="sidebar">
+        <div id="all-players-score-display" class="score-display score-display--side">
+          <span class="remaining-cards-display hidden" id="remaining-cards-display">Zbývá: -- kartiček</span>
+        </div>
+      </aside>
+      <!-- Content: setup and game -->
+      <section class="content">
+        <!-- Setup screen -->
+        <div id="game-setup-screen" class="flex flex-col items-center">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Nastavení hry</h2>
+          <div class="mb-4">
+            <label for="num-players" class="block text-gray-700 text-sm font-bold mb-2">
+              Počet hráčů: <span id="num-players-value">1</span>
+            </label>
+            <input type="range" id="num-players" value="1" min="1" max="5"
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+          </div>
+          <div class="mb-6">
+            <label for="total-cards-input" class="block text-gray-700 text-sm font-bold mb-2">
+              Celkem otázek: <span id="total-cards-value">15</span>
+            </label>
+            <input type="range" id="total-cards-input" value="15" min="1"
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+          </div>
+          <div class="mb-6">
+            <label for="flashcard-set-select" class="block text-gray-700 text-sm font-bold mb-2">
+              Vybrat sadu kartiček:
+            </label>
+            <select id="flashcard-set-select"
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </select>
+          </div>
+          <p class="text-md text-gray-600 mb-8" id="game-instructions">
+            Základní bodování: +1 za správnou, -1 za špatnou. Bonusy za řádek a obtížnost se přičítají/odečítají k tomu.
+          </p>
+          <button id="setup-game-button" class="start-button">Začít hru</button>
+        </div>
+        <!-- Game play area -->
+        <div id="game-play-area" class="hidden">
+          <div class="grid-layout-wrapper">
+            <div class="row-bonus-indicators">
+              <div class="row-bonus-indicator-item"><span>Bonus: </span></div>
+              <div class="row-bonus-indicator-item">
+                <span>Bonus:
+                  <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-4 h-4 ml-1" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <text x="12" y="15" font-family="Verdana" font-size="10" fill="#FFFFFF" text-anchor="middle" font-weight="bold">★</text>
+                  </svg>
+                </span>
+              </div>
+              <div class="row-bonus-indicator-item">
+                <span>Bonus:
+                  <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-4 h-4 ml-1" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <text x="12" y="15" font-family="Verdana" font-size="10" fill="#FFFFFF" text-anchor="middle" font-weight="bold">★</text>
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-4 h-4 ml-1" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <text x="12" y="15" font-family="Verdana" font-size="10" fill="#FFFFFF" text-anchor="middle" font-weight="bold">★</text>
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div class="grid-container" id="card-grid"></div>
+          </div>
+          <div id="question-area" class="question-area hidden">
+            <div id="question-text" class="question-text"></div>
+            <div class="options-grid" id="options-container"></div>
+            <div id="feedback-message" class="feedback-message hidden"></div>
+          </div>
+          <button id="next-round-button" class="start-button hidden">Další kolo</button>
+          <button id="restart-game-button" class="restart-button hidden">Restartovat hru</button>
+        </div>
+      </section>
+    </div>
+  </div>
+  <!-- Modal overlay -->
+  <div id="message-modal-overlay" class="modal-overlay">
+    <div class="modal-content">
+      <h3 id="modal-title"></h3>
+      <div id="modal-content-body"></div>
+      <div class="modal-buttons-container" id="modal-buttons-container">
+        <button id="modal-primary-button" class="modal-button"></button>
+        <button id="modal-secondary-button" class="modal-button secondary hidden"></button>
+      </div>
+    </div>
+  </div>
+  <script>
+        // Otevře modal pro úpravu jména a ikony daného hráče
+        function openEditPlayerModal(index) {
+            const player = players[index];
+        
+            // Vezmeme tvoji existující sadu, případně doplníme o pár obecných
+            const baseChoices = (typeof PLAYER_EMOJIS !== 'undefined' && Array.isArray(PLAYER_EMOJIS) && PLAYER_EMOJIS.length)
+                ? PLAYER_EMOJIS
+                : ['🚀','🌟','💡','🌱','🤖','🎉','🧠','✨','🏆','🎯'];
+        
+            // Unikátní seznam + pár „klasik“ navíc (duplicit se zbavíme pomocí Set)
+            const emojiChoices = Array.from(new Set([
+                ...baseChoices,
+                '🐱','🐶','🦊','🐼','🦁','🐸','🐧','🐨','🐯','🐵',
+                '⚽','🏀','🏈','🎸','🎧','🎲','📚','🧪','🗺️','🧭'
+            ])).slice(0, 24);
+        
+            const contentHTML = `
+                <div class="text-left">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Jméno hráče</label>
+                    <input id="edit-player-name" type="text" value="${player.name}"
+                           class="w-full p-2 border border-gray-300 rounded mb-4" />
+        
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Vyberte ikonu</label>
+                    <div id="emoji-picker" class="grid grid-cols-6 gap-2">
+                        ${emojiChoices.map(e => `
+                            <button type="button"
+                                class="border rounded px-2 py-1 text-xl hover:bg-gray-100 transition
+                                       ${e === player.emoji ? 'ring-2 ring-blue-500' : ''}"
+                                data-emoji="${e}"
+                                aria-label="Zvolit ${e}">
+                                ${e}
+                            </button>
+                        `).join('')}
+                    </div>
+        
+                    <p class="text-xs text-gray-500 mt-3">
+                        Kliknutím vyberte ikonu. Jméno můžete napsat libovolně.
+                    </p>
+                </div>
+            `;
+        
+            showGameModal(
+                "Upravit hráče",
+                contentHTML,
+                "Uložit",
+                () => {
+                    const nameInput = document.getElementById('edit-player-name');
+                    const chosen = document.querySelector('#emoji-picker button.ring-2');
+                    const newName = (nameInput?.value ?? "").trim();
+                    const newEmoji = chosen?.dataset.emoji;
+        
+                    if (newName.length > 0) {
+                        player.name = newName;
+                    }
+                    if (newEmoji) {
+                        player.emoji = newEmoji;
+                    }
+        
+                    window.updateScoreDisplay();
+                },
+                "Zrušit",
+                () => {}
+            );
+        
+            // Napojíme výběr emoji (vyhraje vždy poslední klik)
+            const picker = document.getElementById('emoji-picker');
+            if (picker) {
+                picker.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button[data-emoji]');
+                    if (!btn) return;
+                    picker.querySelectorAll('button.ring-2').forEach(b => b.classList.remove('ring-2','ring-blue-500'));
+                    btn.classList.add('ring-2','ring-blue-500');
+                });
+            }
+        }
+
+        // Function to generate coin SVG
+        function getCoinSvgIcon() {
+            return `<svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-4 h-4 ml-1" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <text x="12" y="15" font-family="Verdana" font-size="10" fill="#FFFFFF" text-anchor="middle" font-weight="bold">★</text>
+                    </svg>`;
+        }
+
+        // Data for flashcards (question, correct answer, incorrect options, difficulty)
+        let flashcardsData = []; 
+        
+        let numPlayers = 1;
+        let TOTAL_CARDS_TO_ANSWER = 15;
+        const DEFAULT_CARDS_PER_PLAYER = {
+            1: 15,
+            2: 20,
+            3: 27,
+            4: 32,
+            5: 35
+        };
+
+        const FLASHCARD_SETS = {
+            "1.rocnik_rany_vrcholny_stredovek": {
+                name: "Středověk až po reformaci",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQcFX-XElafI31HsHhWZ_e8xdCJREnUMvVkv3u0YG31yd7VAwhX2o8WnxKXrjZBkLhR3rreQaJtqVHO/pub?gid=1607867200&single=true&output=tsv"
+            },
+            "2.rocnik_rany_novovek_19_stoleti": {
+                name: "Raný novověk až po průmyslovou revoluci",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZkADdaKWqFzTm6EVGquT6ZIxKOFpPC4dmHzBMgaMP2-TZCE99Hhh2sX3aoGR7ohx3BF8VNGY8IrU6/pub?gid=997575850&single=true&output=tsv"
+            },
+            "3.rocnik_moderni_dejiny": {
+                name: "Všehochuť",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTldhmt4IR1qDuF8WOJXsu0yDPRDV41RpLs4cLY3sVZUH9dXwJsiXL_rjyaJBakg2yn4NEh6f8vG5vB/pub?output=tsv"
+            }
+        };
+
+        let currentFlashcardSetUrl = FLASHCARD_SETS["1.rocnik_rany_vrcholny_stredovek"].url;
+
+        let players = [];
+        let currentPlayerIndex = 0;
+        let answeredCardsTotal = 0;
+
+        let availableCards = [];
+        let currentQuestion = null;
+        let isQuestionActive = false;
+        
+        const PLAYER_COLORS = ['#34D399', '#60A5FA', '#A78BFA', '#FBBF24', '#FB7185'];
+        const PLAYER_NAMES = ['Adam', 'Petra', 'Max', 'Ema', 'Karel', 'Julie', 'Tomáš', 'Anna', 'Lukáš', 'Tereza'];
+        const PLAYER_EMOJIS = ['🚀', '🌟', '💡', '🌱', '🤖', '🎉', '🧠', '✨', '🏆', '🎯'];
+
+        let allPlayersScoreDisplay;
+        let remainingCardsDisplay;
+        let cardGrid;
+        let questionArea; 
+        let feedbackMessage; 
+
+        let setupGameButton;
+        let gameSetupScreen;
+        let gamePlayArea;
+        let numPlayersInput;
+        let totalCardsInput;
+        let totalCardsValueSpan;
+        let numPlayersValueSpan;
+        let flashcardSetSelect;
+
+        // Modal elements
+        const messageModalOverlay = document.getElementById('message-modal-overlay');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContentBody = document.getElementById('modal-content-body');
+        const modalPrimaryButton = document.getElementById('modal-primary-button');
+        const modalSecondaryButton = document.getElementById('modal-secondary-button');
+
+
+        // --- TOOLTIP RELATED CODE START ---
+        const tooltipElement = document.createElement('div');
+        tooltipElement.id = 'card-tooltip';
+        tooltipElement.classList.add('hidden', 'fixed', 'bg-gray-800', 'text-white', 'p-2', 'rounded-md', 'shadow-lg', 'text-sm', 'z-50', 'transition-opacity', 'duration-150');
+        tooltipElement.style.maxWidth = '300px';
+        tooltipElement.style.wordWrap = 'break-word';
+        tooltipElement.style.opacity = '0';
+        document.body.appendChild(tooltipElement);
+
+        let tooltipHideTimeout;
+
+        tooltipElement.addEventListener('mouseover', () => {
+            clearTimeout(tooltipHideTimeout);
+        });
+        tooltipElement.addEventListener('mouseout', () => {
+            hideTooltipWithDelay();
+        });
+
+
+        function showTooltip(text, x, y) {
+            clearTimeout(tooltipHideTimeout);
+            tooltipElement.textContent = text;
+            tooltipElement.classList.remove('hidden');
+            tooltipElement.offsetWidth;
+            tooltipElement.style.opacity = '1';
+            positionTooltip(x, y);
+        }
+
+        function hideTooltip() {
+            tooltipElement.style.opacity = '0';
+            setTimeout(() => {
+                tooltipElement.classList.add('hidden');
+            }, 150);
+        }
+
+        function hideTooltipWithDelay() {
+            clearTimeout(tooltipHideTimeout);
+            tooltipHideTimeout = setTimeout(() => {
+                hideTooltip();
+            }, 300);
+        }
+
+        function positionTooltip(mouseX, mouseY) {
+            const padding = 15;
+            let finalX = mouseX + padding;
+            let finalY = mouseY + padding;
+
+            const originalOpacity = tooltipElement.style.opacity;
+            const originalVisibility = tooltipElement.style.visibility;
+            tooltipElement.style.opacity = '0';
+            tooltipElement.style.visibility = 'visible';
+            tooltipElement.classList.remove('hidden');
+
+            const tooltipWidth = tooltipElement.offsetWidth;
+            const tooltipHeight = tooltipElement.offsetHeight;
+
+            tooltipElement.style.opacity = originalOpacity;
+            tooltipElement.style.visibility = originalVisibility;
+            if (originalOpacity === '0') {
+                tooltipElement.classList.add('hidden');
+            }
+
+            if (finalX + tooltipWidth > window.innerWidth - 10) {
+                finalX = mouseX - tooltipWidth - padding;
+            }
+            if (finalY + tooltipHeight > window.innerHeight - 10) {
+                finalY = mouseY - tooltipHeight - padding;
+            }
+            if (finalX < 10) {
+                finalX = 10;
+            }
+            if (finalY < 10) {
+                finalY = 10;
+            }
+
+            tooltipElement.style.left = `${finalX}px`;
+            tooltipElement.style.top = `${finalY}px`;
+        }
+
+        function handleCardMouseOver(event) {
+            const cardElement = event.currentTarget;
+            const fullText = cardElement.dataset.fullQuestion;
+            if (fullText && fullText.length > 50) { 
+                showTooltip(fullText, event.clientX, event.clientY);
+            }
+        }
+
+        function handleCardMouseMove(event) {
+            if (!tooltipElement.classList.contains('hidden')) {
+                positionTooltip(event.clientX, event.clientY);
+            }
+        }
+
+        function handleCardMouseOut(event) {
+            hideTooltipWithDelay();
+        }
+        // --- TOOLTIP RELATED CODE END ---
+
+        // Function to update all global DOM element references
+        function updateDomElementReferences() {
+            allPlayersScoreDisplay = document.getElementById('all-players-score-display');
+            remainingCardsDisplay = document.getElementById('remaining-cards-display');
+            cardGrid = document.getElementById('card-grid');
+            questionArea = document.getElementById('question-area'); 
+            feedbackMessage = document.getElementById('feedback-message'); 
+
+            setupGameButton = document.getElementById('setup-game-button');
+            gameSetupScreen = document.getElementById('game-setup-screen');
+            gamePlayArea = document.getElementById('game-play-area');
+            numPlayersInput = document.getElementById('num-players');
+            totalCardsInput = document.getElementById('total-cards-input');
+            totalCardsValueSpan = document.getElementById('total-cards-value');
+            numPlayersValueSpan = document.getElementById('num-players-value');
+            flashcardSetSelect = document.getElementById('flashcard-set-select');
+        }
+
+        /**
+         * Updates the default total cards input (slider) based on the selected number of players.
+         * Also sets the max attribute of the slider.
+         */
+        function updateDefaultTotalCards() {
+            if (!numPlayersInput || !totalCardsInput || !totalCardsValueSpan || !numPlayersValueSpan || flashcardsData.length === 0) {
+                console.warn("Required setup elements or flashcards data not ready for updateDefaultTotalCards.");
+                return;
+            }
+            
+            const selectedPlayers = parseInt(numPlayersInput.value);
+            let defaultValue = DEFAULT_CARDS_PER_PLAYER[selectedPlayers] || DEFAULT_CARDS_PER_PLAYER[1];
+            defaultValue = Math.min(defaultValue, flashcardsData.length);
+
+            totalCardsInput.value = defaultValue;
+            totalCardsInput.max = flashcardsData.length;
+            totalCardsValueSpan.textContent = defaultValue;
+            numPlayersValueSpan.textContent = selectedPlayers;
+        }
+
+        /**
+         * Resets game parameters and state (players, scores, etc.) to initial values.
+         */
+        function resetGameParametersAndState() {
+            numPlayers = 1; 
+            currentPlayerIndex = 0;
+            answeredCardsTotal = 0;
+            players = [];
+            usedFlashcardOriginalIndices.clear();
+            availableCards = [];
+
+            if (gamePlayArea) gamePlayArea.classList.add('hidden'); 
+            if (questionArea) questionArea.classList.add('hidden'); 
+            if (cardGrid) cardGrid.innerHTML = ''; 
+            if (feedbackMessage) feedbackMessage.classList.add('hidden'); 
+            if (remainingCardsDisplay) remainingCardsDisplay.classList.add('hidden'); 
+
+            const setupScreen = document.getElementById('game-setup-screen');
+            if (setupScreen) {
+                setupScreen.classList.remove('hidden');
+                updateDomElementReferences();
+                if (numPlayersInput) numPlayersInput.value = '1';
+                if (numPlayersValueSpan) numPlayersValueSpan.textContent = '1';
+                
+                TOTAL_CARDS_TO_ANSWER = DEFAULT_CARDS_PER_PLAYER[1];
+                if (totalCardsInput) totalCardsInput.value = TOTAL_CARDS_TO_ANSWER;
+                if (totalCardsValueSpan) totalCardsValueSpan.textContent = TOTAL_CARDS_TO_ANSWER;
+            }
+            window.updateScoreDisplay();
+        }
+
+        /**
+         * Initializes the game based on user setup (number of players, total cards).
+         */
+        function setupGame() {
+            updateDomElementReferences();
+
+            numPlayers = parseInt(numPlayersInput.value);
+            TOTAL_CARDS_TO_ANSWER = parseInt(totalCardsInput.value);
+            currentFlashcardSetUrl = flashcardSetSelect.value;
+
+            if (isNaN(numPlayers) || numPlayers < 1 || numPlayers > 5) {
+                numPlayers = 1; 
+                numPlayersInput.value = 1;
+            }
+            if (isNaN(TOTAL_CARDS_TO_ANSWER) || TOTAL_CARDS_TO_ANSWER < 1 || TOTAL_CARDS_TO_ANSWER > flashcardsData.length) {
+                TOTAL_CARDS_TO_ANSWER = Math.min(DEFAULT_CARDS_PER_PLAYER[numPlayers], flashcardsData.length);
+                totalCardsInput.value = TOTAL_CARDS_TO_ANSWER;
+            }
+
+            players = [];
+            const shuffledNames = shuffleArray([...PLAYER_NAMES]);
+            const shuffledEmojis = shuffleArray([...PLAYER_EMOJIS]);
+            const shuffledColors = shuffleArray([...PLAYER_COLORS]);
+
+            for (let i = 0; i < numPlayers; i++) {
+                players.push({
+                    name: shuffledNames[i % shuffledNames.length],
+                    score: 0,
+                    correctAnswers: 0,
+                    incorrectAnswers: 0,
+                    incorrectAnswersHistory: [],
+                    color: shuffledColors[i % shuffledColors.length],
+                    emoji: shuffledEmojis[i % shuffledEmojis.length]
+                });
+            }
+
+            currentPlayerIndex = 0;
+            answeredCardsTotal = 0;
+            usedFlashcardOriginalIndices.clear(); 
+
+            if (gameSetupScreen) gameSetupScreen.classList.add('hidden');
+            if (gamePlayArea) gamePlayArea.classList.remove('hidden');
+
+            initializeGameRound();
+        }
+
+        /**
+         * Function to show a custom modal message
+         */
+        function showGameModal(title, contentHTML, primaryBtnText = null, primaryBtnCallback = null, secondaryBtnText = null, secondaryBtnCallback = null) {
+            modalTitle.textContent = title;
+            modalContentBody.innerHTML = contentHTML;
+
+            modalPrimaryButton.onclick = null;
+            modalSecondaryButton.onclick = null;
+            if (modalPrimaryButton) modalPrimaryButton.classList.add('hidden');
+            if (modalSecondaryButton) modalSecondaryButton.classList.add('hidden');
+
+            if (primaryBtnText && primaryBtnCallback) {
+                if (modalPrimaryButton) {
+                    modalPrimaryButton.textContent = primaryBtnText;
+                    modalPrimaryButton.onclick = () => {
+                        if (messageModalOverlay) messageModalOverlay.classList.remove('visible');
+                        primaryBtnCallback();
+                    };
+                    modalPrimaryButton.classList.remove('hidden');
+                }
+            }
+            if (secondaryBtnText && secondaryBtnCallback) {
+                if (modalSecondaryButton) {
+                    modalSecondaryButton.textContent = secondaryBtnText;
+                    modalSecondaryButton.onclick = () => {
+                        if (messageModalOverlay) messageModalOverlay.classList.remove('visible');
+                        secondaryBtnCallback();
+                    };
+                    modalSecondaryButton.classList.remove('hidden');
+                }
+            }
+            if (messageModalOverlay) messageModalOverlay.classList.add('visible');
+        }
+
+        // Utility function to shuffle an array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        let usedFlashcardOriginalIndices = new Set();
+
+        /**
+         * Gets the next available flashcard data, ensuring no repeats within the current game.
+         */
+        function getNextAvailableFlashcardData() {
+            const availableOriginalIndices = [];
+            for (let i = 0; i < flashcardsData.length; i++) {
+                if (!usedFlashcardOriginalIndices.has(i)) {
+                    availableOriginalIndices.push(i);
+                }
+            }
+
+            if (availableOriginalIndices.length === 0) {
+                return null;
+            }
+
+            const randomIndex = Math.floor(Math.random() * availableOriginalIndices.length);
+            const originalIndex = availableOriginalIndices[randomIndex];
+
+            usedFlashcardOriginalIndices.add(originalIndex);
+            return { originalIndex: originalIndex, data: flashcardsData[originalIndex] };
+        }
+
+        /**
+         * Initializes a new round of the game.
+         */
+        function initializeGameRound() {
+            isQuestionActive = false;
+            if (availableCards.length === 0 || availableCards.every(card => card.originalIndex === -1)) {
+                populateInitialFullGrid();
+            }
+            window.updateScoreDisplay();
+            if (remainingCardsDisplay) remainingCardsDisplay.classList.remove('hidden');
+        }
+
+        // Updates the score and remaining cards displayed on the screen.
+        window.updateScoreDisplay = function() { 
+            if (allPlayersScoreDisplay) allPlayersScoreDisplay.innerHTML = '';
+        
+            players.forEach((player, index) => {
+                const playerScoreCard = document.createElement('div');
+                playerScoreCard.classList.add('player-score-card');
+                if (index === currentPlayerIndex) {
+                    playerScoreCard.classList.add('current-player');
+                }
+        
+                playerScoreCard.innerHTML = `
+                    <span class="player-score-emoji">${player.emoji}</span>
+                    <span class="player-score-name" style="color: ${player.color};">${player.name}</span>
+                    <span class="player-score-points">${player.score} bodů</span>
+                `;
+        
+                playerScoreCard.title = 'Kliknutím upravíte jméno a ikonu';
+                playerScoreCard.addEventListener('click', () => openEditPlayerModal(index));
+        
+                if (allPlayersScoreDisplay) allPlayersScoreDisplay.appendChild(playerScoreCard);
+            });
+        
+            if (allPlayersScoreDisplay && remainingCardsDisplay) {
+                allPlayersScoreDisplay.appendChild(remainingCardsDisplay);
+            }
+        
+            const remaining = TOTAL_CARDS_TO_ANSWER - answeredCardsTotal;
+            if (remainingCardsDisplay) {
+                remainingCardsDisplay.textContent = `Zbývá: ${Math.max(0, remaining)} kartiček`;
+                remainingCardsDisplay.classList.remove('hidden');
+            }
+        };
+
+        /**
+         * Populates the grid initially with 9 new unique cards.
+         */
+        function populateInitialFullGrid() {
+            availableCards = [];
+            for (let i = 0; i < 9; i++) {
+                const newCard = getNextAvailableFlashcardData();
+                if (newCard && answeredCardsTotal < TOTAL_CARDS_TO_ANSWER) {
+                    availableCards.push({
+                        uniqueGridId: i,
+                        originalIndex: newCard.originalIndex,
+                        data: newCard.data,
+                        answered: false
+                    });
+                } else {
+                    availableCards.push({
+                        uniqueGridId: i,
+                        originalIndex: -1,
+                        data: { question: "", answer: "", options: [], difficulty: 0 },
+                        answered: true
+                    });
+                }
+            }
+            renderCardGrid();
+            if (questionArea) questionArea.classList.add('hidden');
+            if (feedbackMessage) feedbackMessage.classList.add('hidden');
+        }
+
+        // Renders the 3x3 card grid based on availableCards
+        function renderCardGrid() {
+            if (cardGrid) cardGrid.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const card = availableCards[i];
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card', 'rounded-xl');
+                cardElement.dataset.uniqueGridId = card.uniqueGridId;
+
+                if (card.originalIndex !== -1) {
+                    cardElement.classList.add(`difficulty-${card.data.difficulty}-color`);
+                }
+
+                let difficultyDisplayHtml = '';
+                if (card.originalIndex !== -1 && card.data.difficulty > 1) {
+                    difficultyDisplayHtml += 'Bonus: ';
+                    for (let k = 0; k < (card.data.difficulty - 1); k++) {
+                        difficultyDisplayHtml += getCoinSvgIcon();
+                    }
+                }
+
+                if (card.answered || card.originalIndex === -1) {
+                    cardElement.classList.add('answered');
+                    if (card.originalIndex === -1) {
+                        cardElement.innerHTML = `
+                            <div class="flex-grow flex items-center justify-center text-center p-2 text-sm md:text-base"></div>
+                            <div class="difficulty-indicator"></div>
+                        `;
+                    } else {
+                        cardElement.innerHTML = `
+                            <div class="flex-grow flex items-center justify-center text-center p-2 text-sm md:text-base">Zodpovězeno</div>
+                            <div class="difficulty-indicator">${difficultyDisplayHtml}</div>
+                        `;
+                    }
+                    cardElement.removeEventListener('mouseover', handleCardMouseOver);
+                    cardElement.removeEventListener('mousemove', handleCardMouseMove);
+                    cardElement.removeEventListener('mouseout', handleCardMouseOut);
+                } else {
+                    const fullQuestion = card.data.question;
+                    const questionSnippet = fullQuestion.substring(0, 50) + (fullQuestion.length > 50 ? '...' : '');
+                    
+                    cardElement.innerHTML = `
+                        <div class="flex-grow flex items-center justify-center text-center p-2 text-sm md:text-base">${questionSnippet}</div>
+                        <div class="difficulty-indicator">${difficultyDisplayHtml}</div>
+                    `;
+                    cardElement.dataset.fullQuestion = fullQuestion; 
+
+                    if (!isQuestionActive) {
+                        cardElement.addEventListener('click', handleCardClick);
+                        cardElement.style.cursor = 'pointer'; 
+
+                        if (fullQuestion.length > 50) {
+                            cardElement.addEventListener('mouseover', handleCardMouseOver);
+                            cardElement.addEventListener('mousemove', handleCardMouseMove);
+                            cardElement.addEventListener('mouseout', handleCardMouseOut);
+                        } else {
+                            cardElement.removeEventListener('mouseover', handleCardMouseOver);
+                            cardElement.removeEventListener('mousemove', handleCardMouseMove);
+                            cardElement.removeEventListener('mouseout', handleCardMouseOut);
+                        }
+                    } else {
+                        cardElement.removeEventListener('click', handleCardClick);
+                        cardElement.style.cursor = 'not-allowed';
+                        cardElement.removeEventListener('mouseover', handleCardMouseOver);
+                        cardElement.removeEventListener('mousemove', handleCardMouseMove);
+                        cardElement.removeEventListener('mouseout', handleCardMouseOut);
+                    }
+                }
+                if (cardGrid) cardGrid.appendChild(cardElement);
+            }
+        }
+
+        // Generates HTML content for the question and options to be used in the modal
+        function getQuestionModalContent(qData) {
+            let options = [...qData.options, qData.answer];
+            shuffleArray(options);
+            let optionsHtml = options.map(option => `
+                <button class="option-button rounded-lg" data-answer="${option}">
+                    ${option}
+                </button>
+            `).join('');
+            return `
+                <div id="modal-question-area">
+                    <p class="question-text">${qData.question}</p>
+                    <div class="options-grid">
+                        ${optionsHtml}
+                    </div>
+                    <div id="modal-feedback-message" class="feedback-message hidden"></div>
+                </div>
+            `;
+        }
+
+        // Handles click on a card in the grid
+        function handleCardClick(event) {
+            if (answeredCardsTotal >= TOTAL_CARDS_TO_ANSWER || usedFlashcardOriginalIndices.size === flashcardsData.length) {
+                showGameModal(
+                    "Konec hry",
+                    "<p>Byly zodpovězeny všechny otázky nebo vyčerpány všechny unikátní kartičky.</p>",
+                    "Zobrazit výsledky",
+                    showEndGameSummary
+                );
+                return;
+            }
+
+            if (isQuestionActive) {
+                return;
+            }
+
+            const cardElement = event.currentTarget;
+            const uniqueGridId = parseInt(cardElement.dataset.uniqueGridId);
+
+            const card = availableCards.find(c => c.uniqueGridId === uniqueGridId);
+
+            if (card.answered || card.originalIndex === -1) {
+                return;
+            }
+
+            document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+            cardElement.classList.add('selected');
+
+            currentQuestion = card;
+            isQuestionActive = true;
+
+            if (cardGrid) {
+                Array.from(cardGrid.children).forEach(c => {
+                    c.removeEventListener('click', handleCardClick);
+                    c.style.cursor = 'not-allowed';
+                    c.removeEventListener('mouseover', handleCardMouseOver);
+                    c.removeEventListener('mousemove', handleCardMouseMove);
+                    c.removeEventListener('mouseout', handleCardMouseOut);
+                });
+            }
+            hideTooltip();
+
+            const modalContent = getQuestionModalContent(card.data);
+            
+            showGameModal(
+                "Otázka",
+                modalContent,
+                null,
+                null
+            );
+
+            const modalOptionsContainer = document.querySelector('#modal-question-area .options-grid');
+            if (modalOptionsContainer) {
+                Array.from(modalOptionsContainer.children).forEach(button => {
+                    button.addEventListener('click', handleAnswerClickInModal);
+                });
+            }
+        }
+
+        // Handles click on an answer option within the modal
+        function handleAnswerClickInModal(event) {
+            const selectedOption = event.target.dataset.answer;
+            const correctAnswer = currentQuestion.data.answer;
+            const modalFeedbackMessage = document.getElementById('modal-feedback-message');
+            const currentPlayer = players[currentPlayerIndex];
+
+            let points = 0;
+            let bonusPoints = 0;
+
+            const cardElement = document.querySelector(`.card[data-unique-grid-id="${currentQuestion.uniqueGridId}"]`);
+            const cardIndexInAvailableCards = currentQuestion.uniqueGridId; 
+            const row = Math.floor(cardIndexInAvailableCards / 3) + 1;
+
+            if (row === 2) {
+                bonusPoints += 1;
+            } else if (row === 3) {
+                bonusPoints += 2;
+            }
+
+            if (currentQuestion.data.difficulty === 2) {
+                bonusPoints += 1;
+            } else if (currentQuestion.data.difficulty === 3) {
+                bonusPoints += 2;
+            }
+
+            if (selectedOption === correctAnswer) {
+                points = 1 + bonusPoints;
+                currentPlayer.score += points;
+                currentPlayer.correctAnswers++;
+                modalFeedbackMessage.textContent = `Správně! Získali jste ${points} bodů.`;
+                modalFeedbackMessage.classList.remove('text-red-600');
+                modalFeedbackMessage.classList.add('text-green-600');
+            } else {
+                points = -(1 + bonusPoints);
+                currentPlayer.score += points;
+                currentPlayer.incorrectAnswers++;
+                currentPlayer.incorrectAnswersHistory.push({
+                    question: currentQuestion.data.question,
+                    correctAnswer: correctAnswer,
+                    userAnswer: selectedOption
+                });
+                modalFeedbackMessage.textContent = `Špatně! Správná odpověď byla: "${correctAnswer}". Ztratili jste ${Math.abs(points)} bodů.`;
+                modalFeedbackMessage.classList.remove('text-green-600');
+                modalFeedbackMessage.classList.add('text-red-600');
+            }
+
+            currentPlayer.score = Math.max(0, currentPlayer.score);
+
+            answeredCardsTotal++;
+            window.updateScoreDisplay();
+
+            if (modalFeedbackMessage) modalFeedbackMessage.classList.remove('hidden');
+
+            const modalOptionsContainer = event.target.closest('.options-grid');
+            if (modalOptionsContainer) {
+                Array.from(modalOptionsContainer.children).forEach(button => {
+                    button.removeEventListener('click', handleAnswerClickInModal);
+                    if (button.dataset.answer === correctAnswer) {
+                        button.classList.add('correct');
+                    } else if (button.dataset.answer === selectedOption) {
+                        button.classList.add('incorrect');
+                    }
+                    button.style.cursor = 'not-allowed';
+                });
+            }
+            
+            const answeredCard = availableCards.find(card => card.uniqueGridId === currentQuestion.uniqueGridId);
+            if (answeredCard) {
+                answeredCard.answered = true;
+                const answeredCardElement = document.querySelector(`.card[data-unique-grid-id="${currentQuestion.uniqueGridId}"]`);
+                if (answeredCardElement) {
+                    answeredCardElement.classList.add('answered');
+                    answeredCardElement.classList.remove('selected');
+                    answeredCardElement.removeEventListener('click', handleCardClick); 
+                    answeredCardElement.removeEventListener('mouseover', handleCardMouseOver);
+                    answeredCardElement.removeEventListener('mousemove', handleCardMouseMove);
+                    answeredCardElement.removeEventListener('mouseout', handleCardMouseOut);
+
+                    let difficultyDisplayHtml = '';
+                    if (answeredCard.originalIndex !== -1 && answeredCard.data.difficulty > 1) { 
+                        difficultyDisplayHtml += 'Bonus: ';
+                        for (let k = 0; k < (answeredCard.data.difficulty - 1); k++) { 
+                            difficultyDisplayHtml += getCoinSvgIcon();
+                        }
+                    }
+
+                    answeredCardElement.innerHTML = `
+                        <div class="flex-grow flex items-center justify-center text-center p-2 text-sm md:text-base">Zodpovězeno</div>
+                        <div class="difficulty-indicator">${difficultyDisplayHtml}</div>
+                    `;
+                }
+            }
+
+            if (answeredCardsTotal >= TOTAL_CARDS_TO_ANSWER || usedFlashcardOriginalIndices.size === flashcardsData.length) {
+                if (messageModalOverlay) messageModalOverlay.classList.remove('visible'); 
+                showEndGameSummary();
+            } else {
+                if (modalPrimaryButton) {
+                    modalPrimaryButton.classList.remove('hidden');
+                    modalPrimaryButton.textContent = "Další tah";
+                    modalPrimaryButton.onclick = () => {
+                        if (messageModalOverlay) messageModalOverlay.classList.remove('visible');
+                        nextPlayerTurn();
+                    };
+                }
+                if (modalSecondaryButton) {
+                    modalSecondaryButton.classList.remove('hidden');
+                    modalSecondaryButton.textContent = "Ukončit a vyhodnotit";
+                    modalSecondaryButton.onclick = () => {
+                        if (messageModalOverlay) messageModalOverlay.classList.remove('visible');
+                        showEndGameSummary();
+                    };
+                }
+            }
+        }
+
+        /**
+         * Switches to the next player and initiates the next round, handling the card shift.
+         */
+        function nextPlayerTurn() {
+            isQuestionActive = false; 
+
+            if (answeredCardsTotal >= TOTAL_CARDS_TO_ANSWER || usedFlashcardOriginalIndices.size === flashcardsData.length) {
+                showEndGameSummary(); 
+                return;
+            }
+
+            const answeredCardGridId = currentQuestion.uniqueGridId; 
+
+            availableCards.splice(answeredCardGridId, 1);
+
+            const newCardData = getNextAvailableFlashcardData();
+
+            let newCardObject;
+            if (answeredCardsTotal < TOTAL_CARDS_TO_ANSWER && newCardData) {
+                newCardObject = {
+                    uniqueGridId: -1,
+                    originalIndex: newCardData.originalIndex,
+                    data: newCardData.data,
+                    answered: false
+                };
+            } else {
+                newCardObject = {
+                    uniqueGridId: -1,
+                    originalIndex: -1,
+                    data: { question: "", answer: "", options: [], difficulty: 0 },
+                    answered: true
+                };
+            }
+
+            availableCards.unshift(newCardObject);
+
+            if (availableCards.length > 9) {
+                 availableCards.pop();
+            }
+
+            availableCards.forEach((card, index) => {
+                card.uniqueGridId = index;
+            });
+
+            currentPlayerIndex = (currentPlayerIndex + 1) % numPlayers;
+            window.updateScoreDisplay();
+            renderCardGrid();
+        }
+
+        /**
+         * Returns the game to the setup screen, resetting inputs.
+         */
+        function returnToSetupScreen() {
+            updateDomElementReferences();
+            const selectedUrlBeforeReset = flashcardSetSelect ? flashcardSetSelect.value : currentFlashcardSetUrl;
+
+            resetGameParametersAndState();
+            loadFlashcards(selectedUrlBeforeReset);
+        }
+
+        // Displays the end game summary modal
+        function showEndGameSummary() {
+            isQuestionActive = true; 
+
+            let summaryContent = `
+                <p class="mb-4 text-xl font-bold">Hra skončila!</p>
+                <div class="text-left mb-4">
+                    <h4 class="font-semibold text-lg mb-2">Výsledky hráčů:</h4>
+                    ${players.map(player => `
+                        <p><span class="font-semibold" style="color: ${player.color};">${player.emoji} ${player.name}</span>: <strong class="text-blue-700">${player.score}</strong> bodů (Správně: ${player.correctAnswers}, Špatně: ${player.incorrectAnswers})</p>
+                    `).join('')}
+                </div>
+            `;
+
+            let playerDetailsButtons = players.map((player, index) => `
+                <button class="modal-button secondary mt-2 mr-2" onclick="window.showPlayerIncorrectAnswers(${index})">
+                    Chybné odpovědi ${player.name}
+                </button>
+            `).join('');
+
+            showGameModal(
+                "Hra dokončena!",
+                summaryContent + `<div class="modal-buttons-container flex-col">${playerDetailsButtons}</div>`,
+                "Hrát znovu",
+                returnToSetupScreen
+            );
+
+            if (questionArea) questionArea.classList.add('hidden');
+            if (cardGrid) cardGrid.innerHTML = '';
+        }
+
+        /**
+         * Displays the incorrect answers modal for a specific player.
+         */
+        window.showPlayerIncorrectAnswers = function(playerIndex) { 
+            const player = players[playerIndex];
+            let incorrectListHTML = '';
+            if (player.incorrectAnswersHistory.length > 0) {
+                incorrectListHTML = '<ul>' + player.incorrectAnswersHistory.map(item => `
+                    <li>
+                        <div class="question-text-small">Otázka: ${item.question}</div>
+                        <div class="answer-text-small">Správná odpověď: ${item.correctAnswer}</div>
+                        <div class="user-answer-text-small">Vaše odpověď: ${item.userAnswer}</div>
+                    </li>
+                `).join('') + '</ul>';
+            } else {
+                incorrectListHTML = '<p>Nemáte žádné špatné odpovědi! Gratulujeme!</p>';
+            }
+
+            showGameModal(
+                `Špatné odpovědi - ${player.name}`,
+                incorrectListHTML,
+                "Hrát znovu",
+                returnToSetupScreen,
+                "Zpět na souhrn",
+                showEndGameSummary
+            );
+        }
+
+        /**
+         * Loads flashcards data from the specified Google Sheet TSV URL.
+         */
+        async function loadFlashcards(urlToLoad = currentFlashcardSetUrl) {
+            updateDomElementReferences();
+
+            if (gameSetupScreen) {
+                gameSetupScreen.innerHTML = `
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Načítání kartiček...</h2>
+                    <p class="text-md text-gray-600">Prosím čekejte, načítáme otázky z databáze.</p>
+                `;
+            }
+            
+            try {
+                const response = await fetch(urlToLoad);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const tsvData = await response.text();
+
+                const lines = tsvData.split('\n').filter(line => line.trim() !== '');
+                if (lines.length <= 1) {
+                    throw new Error('No flashcard data found in the spreadsheet or invalid format.');
+                }
+
+                const headers = lines[0].split('\t').map(h => h.trim().toLowerCase());
+
+                const dataRows = lines.slice(1);
+
+                flashcardsData = dataRows.map(row => {
+                    const values = row.split('\t').map(v => v.trim());
+                    const card = {};
+                    
+                    headers.forEach((header, index) => {
+                        const value = values[index];
+                        if (header === "question") {
+                            card.question = value;
+                        } else if (header === "correct answer") {
+                            card.answer = value;
+                        } else if (header.startsWith("option")) {
+                            if (!card.options) card.options = [];
+                            if (value) card.options.push(value);
+                        } else if (header === "difficulty") {
+                            card.difficulty = parseInt(value) || 1;
+                        }
+                    });
+                    
+                    if (!card.options) card.options = [];
+
+                    if (!card.question || !card.answer) {
+                        console.warn("Skipping malformed flashcard row (missing question or answer):", row, "Parsed card:", card);
+                        return null;
+                    }
+                    return card;
+                }).filter(card => card !== null);
+
+                if (flashcardsData.length === 0) {
+                    throw new Error('Parsed flashcard data is empty. Check spreadsheet format. (No valid cards found)');
+                }
+
+                if (gameSetupScreen) {
+                    gameSetupScreen.innerHTML = `
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Nastavení hry</h2>
+                        <div class="mb-4">
+                            <label for="num-players" class="block text-gray-700 text-sm font-bold mb-2">Počet hráčů: <span id="num-players-value">1</span></label>
+                            <input type="range" id="num-players" value="1" min="1" max="5" 
+                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                        </div>
+                        <div class="mb-6">
+                            <label for="total-cards-input" class="block text-gray-700 text-sm font-bold mb-2">Celkem otázek: <span id="total-cards-value">15</span></label>
+                            <input type="range" id="total-cards-input" value="15" min="1"
+                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                        </div>
+                        <div class="mb-6">
+                            <label for="flashcard-set-select" class="block text-gray-700 text-sm font-bold mb-2">Vybrat sadu kartiček:</label>
+                            <select id="flashcard-set-select" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </select>
+                        </div>
+                        <p class="text-md text-gray-600 mb-8" id="game-instructions">Základní bodování: +1 za správnou, -1 za špatnou. Bonusy za řádek a obtížnost se přičítají/odečítají k tomu.</p>
+                        <button id="setup-game-button" class="start-button">Začít hru</button>
+                    `;
+                }
+                
+                updateDomElementReferences();
+
+                if (flashcardSetSelect) {
+                    flashcardSetSelect.innerHTML = '';
+                    for (const key in FLASHCARD_SETS) {
+                        const option = document.createElement('option');
+                        option.value = FLASHCARD_SETS[key].url;
+                        option.textContent = FLASHCARD_SETS[key].name;
+                        flashcardSetSelect.appendChild(option);
+                    }
+                    flashcardSetSelect.value = urlToLoad;
+                }
+
+                if (setupGameButton) setupGameButton.addEventListener('click', setupGame);
+                if (numPlayersInput) numPlayersInput.addEventListener('input', (event) => { 
+                    if (numPlayersValueSpan) numPlayersValueSpan.textContent = event.target.value;
+                    updateDefaultTotalCards(); 
+                });
+                if (totalCardsInput) totalCardsInput.addEventListener('input', (event) => {
+                    if (totalCardsValueSpan) totalCardsValueSpan.textContent = event.target.value;
+                });
+                if (flashcardSetSelect) {
+                    flashcardSetSelect.removeEventListener('change', handleFlashcardSetChange);
+                    flashcardSetSelect.addEventListener('change', handleFlashcardSetChange);
+                }
+
+                if (setupGameButton) setupGameButton.disabled = false;
+                updateDefaultTotalCards();
+            } catch (error) {
+                console.error('Failed to load flashcards:', error);
+                let failedSetName = "Neznámá sada";
+                for (const key in FLASHCARD_SETS) {
+                    if (FLASHCARD_SETS[key].url === urlToLoad) {
+                        failedSetName = FLASHCARD_SETS[key].name;
+                        break;
+                    }
+                }
+
+                const errorMessageHTML = `
+                    <p class="text-md text-gray-800 mb-4">Nepodařilo se načíst sadu kartiček:</p>
+                    <p class="text-lg font-bold text-red-600 mb-4">"${failedSetName}"</p>
+                    <p class="text-sm text-gray-600 mb-4">Prosím, zkontrolujte:</p>
+                    <ul class="text-sm text-gray-600 text-left list-disc list-inside mb-4">
+                        <li>Zda je adresa URL správná: <a href="${urlToLoad}" target="_blank" class="text-blue-500 underline">odkaz na tabulku</a>.</li>
+                        <li>Zda je Google tabulka sdílena jako "Publikovat na webu" ve formátu TSV.</li>
+                        <li>Zda má tabulka správné záhlaví sloupců (ignorují se mezery a velikost písmen): <strong>"Question", "Correct Answer", "Option 1", "Option 2", "Difficulty"</strong>.</li>
+                        <li>Zda nejsou sloupce "Question" nebo "Correct Answer" prázdné pro všechny řádky s otázkami.</li>
+                    </ul>
+                    <p class="text-sm text-gray-600">Detaily chyby: ${error.message}</p>
+                `;
+
+                showGameModal(
+                    "Chyba při načítání kartiček!",
+                    errorMessageHTML,
+                    "Zkusit znovu",
+                    () => {
+                        const defaultSetKey = Object.keys(FLASHCARD_SETS)[0];
+                        currentFlashcardSetUrl = FLASHCARD_SETS[defaultSetKey].url; 
+                        resetGameParametersAndState(); 
+                        loadFlashcards(currentFlashcardSetUrl); 
+                    }
+                );
+                if (setupGameButton) setupGameButton.disabled = true; 
+            }
+        }
+
+        // Handler for flashcard set change
+        function handleFlashcardSetChange(event) {
+            currentFlashcardSetUrl = event.target.value;
+            resetGameParametersAndState();
+            loadFlashcards(currentFlashcardSetUrl);
+        }
+
+        window.onload = async () => {
+            updateDomElementReferences(); 
+
+            if (flashcardSetSelect) {
+                for (const key in FLASHCARD_SETS) {
+                    const option = document.createElement('option');
+                    option.value = FLASHCARD_SETS[key].url;
+                    option.textContent = FLASHCARD_SETS[key].name;
+                    flashcardSetSelect.appendChild(option);
+                }
+                flashcardSetSelect.value = currentFlashcardSetUrl;
+            }
+
+            if (setupGameButton) setupGameButton.addEventListener('click', setupGame);
+            if (numPlayersInput) numPlayersInput.addEventListener('input', (event) => {
+                if (numPlayersValueSpan) numPlayersValueSpan.textContent = event.target.value;
+                updateDefaultTotalCards();
+            });
+            if (totalCardsInput) totalCardsInput.addEventListener('input', (event) => {
+                if (totalCardsValueSpan) totalCardsValueSpan.textContent = event.target.value;
+            });
+            if (flashcardSetSelect) {
+                flashcardSetSelect.addEventListener('change', handleFlashcardSetChange);
+            }
+
+            await loadFlashcards(currentFlashcardSetUrl); 
+        };
+  </script>
+</body>
+</html>
