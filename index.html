@@ -435,12 +435,24 @@
             }
             .score-display--side .player-score-card { width: auto; min-width: 120px; }
         }
+    
+        /* Center layout when sidebar hidden (setup screen) */
+        #main-layout.centered {
+            justify-content: center;
+        }
+        #main-layout.centered .content {
+            flex: none;
+        }
+        #main-layout.centered .sidebar {
+            display: none;
+        }
+
     </style>
 </head>
 <body>
   <div class="game-container">
     <div class="text-4xl font-extrabold text-blue-800 mb-6"></div>
-    <div class="main-layout">
+    <div id="main-layout" class="main-layout centered">
       <!-- Sidebar: scoreboard -->
       <aside class="sidebar">
         <div id="all-players-score-display" class="score-display score-display--side">
@@ -843,7 +855,9 @@
                 if (totalCardsInput) totalCardsInput.value = TOTAL_CARDS_TO_ANSWER;
                 if (totalCardsValueSpan) totalCardsValueSpan.textContent = TOTAL_CARDS_TO_ANSWER;
             }
-            window.updateScoreDisplay();
+                        const mainLayout = document.getElementById('main-layout');
+            if (mainLayout) mainLayout.classList.add('centered');
+window.updateScoreDisplay();
         }
 
         /**
@@ -888,6 +902,9 @@
 
             if (gameSetupScreen) gameSetupScreen.classList.add('hidden');
             if (gamePlayArea) gamePlayArea.classList.remove('hidden');
+            const mainLayout = document.getElementById('main-layout');
+            if (mainLayout) mainLayout.classList.remove('centered');
+
 
             initializeGameRound();
         }
