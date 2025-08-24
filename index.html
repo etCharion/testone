@@ -29,7 +29,9 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            margin-top: 50px;
+            /* Reduce vertical whitespace and use equal margins on top and bottom of the container */
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
         /* New wrapper for row bonus indicators and card grid */
         .grid-layout-wrapper {
@@ -424,9 +426,10 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    /* Align the sidebar with the top of the grid. A slightly larger top margin
-     * ensures the first score card aligns with the first row of cards. */
-    margin-top: 40px;
+    /* Align the sidebar with the top of the grid.  Use the same top margin as the
+     * grid so that the first score card aligns perfectly with the first row of
+     * cards. */
+    margin-top: 20px;
         }
         .content { flex: 1; min-width: 0; }
         /* Scoreboard styling in side column */
@@ -469,10 +472,13 @@
             color: white;
             border: none;
             /* Smaller padding and rounded corners instead of a circle */
-            padding: 4px 8px;
+            padding: 6px 10px;
             border-radius: 8px;
-            /* Reduce the font size so the button fits neatly in the sidebar */
-            font-size: 0.85rem;
+            /* Slightly larger font size to improve legibility while keeping the text on one line */
+            font-size: 0.9rem;
+            /* Expand to fill the available width in the sidebar */
+            width: 100%;
+            text-align: center;
             cursor: pointer;
             box-shadow: 0 3px 7px rgba(0,0,0,0.1);
         }
@@ -483,16 +489,20 @@
         #sidebar-buttons {
             gap: 6px;
             /* Push the help and end buttons to the bottom of the sidebar so they align
-             * with the last row of cards.  Flexbox makes the container fill available
-             * height and margin-top:auto pushes the buttons down. */
+             * with the last row of cards.  margin-top:auto pushes this container to
+             * consume the remaining vertical space. */
             margin-top: auto;
             display: flex;
-            align-items: center;
-            justify-content: flex-start;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-end;
+            width: 100%;
         }
         #end-game-button {
-            font-size: 0.85rem;
-            padding: 6px 12px;
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            /* Expand to fill the available width in the sidebar */
+            width: 100%;
             white-space: nowrap;
         }
         /* The end game button uses the existing restart-button styles to be consistent */
