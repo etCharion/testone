@@ -353,38 +353,49 @@
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .grid-layout-wrapper {
+                /* Keep cards and bonuses stacked vertically on small screens, but
+                 * maintain the same top padding as on desktop so the row labels
+                 * align correctly with the first row of cards. */
                 flex-direction: column;
                 align-items: center;
-                padding-top: 10px;
+                padding-top: 20px;
             }
             .row-bonus-indicators {
-                position: static;
-                width: 100%;
-                flex-direction: row;
-                justify-content: center;
-                border-right: none;
-                border-bottom: 2px solid #cbd5e0;
-                padding-right: 0;
-                padding-bottom: 10px;
-                align-self: auto;
-                min-height: auto;
-                height: auto;
+                /* Maintain the vertical bonus bar on the left on small screens. */
+                position: absolute;
+                width: 30px;
+                flex-direction: column;
+                justify-content: space-around;
+                border-right: 2px solid #cbd5e0;
+                border-bottom: none;
+                padding-right: 5px;
+                padding-bottom: 0;
+                align-self: stretch;
+                left: 0;
+                top: 20px;
+                bottom: 0;
             }
             .row-bonus-indicator-item {
+                /* Do not center the labels horizontally; keep them evenly spaced */
                 border-right: none;
                 justify-content: center;
-                padding: 5px;
-                min-height: auto;
-                flex-grow: 0;
+                padding: 0;
+                min-height: 0;
+                flex-grow: 1;
             }
             .row-bonus-indicator-item span {
-                position: static;
-                transform: none;
-                white-space: normal;
+                /* Maintain the rotated vertical label even on small screens */
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-90deg);
+                transform-origin: center center;
+                white-space: nowrap;
             }
             .grid-container {
-                margin-top: 10px;
-                margin-left: 0;
+                /* Leave space for the bonus column on the left */
+                margin-top: 0;
+                margin-left: 50px;
             }
             .card {
                 font-size: 0.9rem;
@@ -408,13 +419,15 @@
         .sidebar {
             width: 260px;
             flex-shrink: 0;
-            position: sticky;
-            top: 20px;
-            /* Align the sidebar with the top of the grid.
-             * Stretching the sidebar made it vertically centered relative to the content,
-             * which caused the names panel to sit lower than the card grid.
-             * Using flex-start keeps the top edges aligned. */
+            /* Remove sticky positioning so the scoreboard aligns directly with the grid's top.
+             * Instead of sticking to the viewport, it will scroll with the content and
+             * start at the same vertical offset as the card grid. */
+            /* position: sticky;
+            top: 20px; */
+            /* Align the sidebar with the top of the grid */
             align-self: flex-start;
+            /* Match the grid's top padding to align the first score card with the first row */
+            margin-top: 20px;
         }
         .content { flex: 1; min-width: 0; }
         /* Scoreboard styling in side column */
