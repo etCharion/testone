@@ -969,7 +969,11 @@
                 populateInitialFullGrid();
             }
             window.updateScoreDisplay();
-            if (remainingCardsDisplay) remainingCardsDisplay.classList.remove('hidden');
+            if (remainingCardsDisplay) if (gamePlayArea && gamePlayArea.classList.contains('hidden')) {
+                    remainingCardsDisplay.classList.add('hidden');
+                } else {
+                    remainingCardsDisplay.classList.remove('hidden');
+                }
         }
 
         // Updates the score and remaining cards displayed on the screen.
@@ -1002,7 +1006,11 @@
             const remaining = TOTAL_CARDS_TO_ANSWER - answeredCardsTotal;
             if (remainingCardsDisplay) {
                 remainingCardsDisplay.textContent = `Zbývá: ${Math.max(0, remaining)} kartiček`;
-                remainingCardsDisplay.classList.remove('hidden');
+                if (gamePlayArea && gamePlayArea.classList.contains('hidden')) {
+                    remainingCardsDisplay.classList.add('hidden');
+                } else {
+                    remainingCardsDisplay.classList.remove('hidden');
+                }
             }
         };
 
