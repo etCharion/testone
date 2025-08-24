@@ -464,6 +464,22 @@
             display: none;
         }
 
+        /* Help and End Game buttons */
+        .help-button {
+            background-color: #4c51bf;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 3px 7px rgba(0,0,0,0.1);
+        }
+        .help-button:hover {
+            background-color: #3f44a9;
+        }
+        /* The end game button uses the existing restart-button styles to be consistent */
+
     </style>
 </head>
 <body>
@@ -474,6 +490,11 @@
       <aside class="sidebar">
         <div id="all-players-score-display" class="score-display score-display--side">
           <span class="remaining-cards-display hidden" id="remaining-cards-display">Zbývá: -- kartiček</span>
+        </div>
+        <!-- Buttons for help and ending the game. Initially hidden; shown during gameplay. -->
+        <div id="sidebar-buttons" class="hidden" style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+          <button id="help-button" class="help-button" title="Jak se hraje?">?</button>
+          <button id="end-game-button" class="restart-button">Ukončit a vyhodnotit</button>
         </div>
       </aside>
       <!-- Content: setup and game -->
@@ -700,6 +721,11 @@
         let numPlayersValueSpan;
         let flashcardSetSelect;
 
+        // Sidebar control buttons
+        let helpButton;
+        let endGameButton;
+        let sidebarButtons;
+
         // Modal elements
         const messageModalOverlay = document.getElementById('message-modal-overlay');
         const modalTitle = document.getElementById('modal-title');
@@ -822,6 +848,11 @@
             totalCardsValueSpan = document.getElementById('total-cards-value');
             numPlayersValueSpan = document.getElementById('num-players-value');
             flashcardSetSelect = document.getElementById('flashcard-set-select');
+
+            // Elements for the help and end-game buttons in the sidebar
+            helpButton = document.getElementById('help-button');
+            endGameButton = document.getElementById('end-game-button');
+            sidebarButtons = document.getElementById('sidebar-buttons');
         }
 
         /**
@@ -860,6 +891,11 @@
             if (cardGrid) cardGrid.innerHTML = ''; 
             if (feedbackMessage) feedbackMessage.classList.add('hidden'); 
             if (remainingCardsDisplay) remainingCardsDisplay.classList.add('hidden'); 
+
+            // Hide the help/end buttons when returning to setup
+            if (sidebarButtons) {
+                sidebarButtons.classList.add('hidden');
+            }
 
             const setupScreen = document.getElementById('game-setup-screen');
             if (setupScreen) {
@@ -919,6 +955,11 @@ window.updateScoreDisplay();
 
             if (gameSetupScreen) gameSetupScreen.classList.add('hidden');
             if (gamePlayArea) gamePlayArea.classList.remove('hidden');
+
+            // Show the help/end buttons when the game starts
+            if (sidebarButtons) {
+                sidebarButtons.classList.remove('hidden');
+            }
             const mainLayout = document.getElementById('main-layout');
             if (mainLayout) mainLayout.classList.remove('centered');
 
@@ -959,6 +1000,23 @@ window.updateScoreDisplay();
                 }
             }
             if (messageModalOverlay) messageModalOverlay.classList.add('visible');
+        }
+
+        /**
+         * Displays a modal explaining the game rules: how cards move and how scoring works.
+         * Uses showGameModal internally with a close button only.
+         */
+        function showHelpModal() {
+            const helpContent = `
+                <div class="text-left">
+                    <p class="mb-2"><strong>Pohyb kartiček:</strong></p>
+                    <p class="mb-4">Když odpovíte na otázku, tato kartička a kartička v pravém dolním rohu se z herní mřížky odstraní. Ostatní kartičky se posunou po řádcích doleva a dolů. V levém horním rohu se přidají dvě nové kartičky.</p>
+                    <p class="mb-2"><strong>Bodování:</strong></p>
+                    <p>Za správnou odpověď získáte +1 bod, za špatnou -1 bod. Bonusové body se přičítají podle obtížnosti otázky (0–2 body podle barvy kartičky) a podle řádku, ve kterém se kartička nachází (řádek 1: 0 bodů, řádek 2: +1 bod, řádek 3: +2 body).</p>
+                    <img src="card_movement_diagram.png" alt="Diagram pohybu kartiček" style="max-width: 100%; margin-top: 1rem; border-radius: 4px; border: 1px solid #e2e8f0; padding: 4px;" />
+                </div>
+            `;
+            showGameModal("Jak se hraje?", helpContent, "Zavřít", () => {});
         }
 
         // Utility function to shuffle an array
@@ -1333,13 +1391,9 @@ window.updateScoreDisplay();
                         nextPlayerTurn();
                     };
                 }
+                // Hide the secondary button during normal play. The end game button is now on the board itself.
                 if (modalSecondaryButton) {
-                    modalSecondaryButton.classList.remove('hidden');
-                    modalSecondaryButton.textContent = "Ukončit a vyhodnotit";
-                    modalSecondaryButton.onclick = () => {
-                        if (messageModalOverlay) messageModalOverlay.classList.remove('visible');
-                        showEndGameSummary();
-                    };
+                    modalSecondaryButton.classList.add('hidden');
                 }
             }
         }
@@ -1657,6 +1711,16 @@ window.updateScoreDisplay();
             });
             if (flashcardSetSelect) {
                 flashcardSetSelect.addEventListener('change', handleFlashcardSetChange);
+            }
+
+            // Attach handlers for the sidebar buttons after references are set
+            if (helpButton) {
+                helpButton.addEventListener('click', showHelpModal);
+            }
+            if (endGameButton) {
+                endGameButton.addEventListener('click', () => {
+                    showEndGameSummary();
+                });
             }
 
             await loadFlashcards(currentFlashcardSetUrl); 
