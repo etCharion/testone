@@ -417,7 +417,7 @@
         }
         /* Two-column layout for desktop */
         .game-container { max-width: 1200px; }
-        .main-layout { display: flex; gap: 24px; align-items: flex-start; }
+        .main-layout { display: flex; gap: 24px; align-items: stretch; }
         .sidebar {
             width: 260px;
             flex-shrink: 0;
@@ -1040,7 +1040,35 @@ window.updateScoreDisplay();
                     <p class="mb-4">Když odpovíte na otázku, tato kartička a kartička v pravém dolním rohu se z herní mřížky odstraní. Ostatní kartičky se posunou po řádcích doleva a dolů. V levém horním rohu se přidají dvě nové kartičky.</p>
                     <p class="mb-2"><strong>Bodování:</strong></p>
                     <p>Za správnou odpověď získáte +1 bod, za špatnou -1 bod. Bonusové body se přičítají podle obtížnosti otázky (0–2 body podle barvy kartičky) a podle řádku, ve kterém se kartička nachází (řádek 1: 0 bodů, řádek 2: +1 bod, řádek 3: +2 body).</p>
-                    <img src="./card_movement_diagram.png" alt="Diagram pohybu kartiček" style="max-width: 100%; margin-top: 1rem; border-radius: 4px; border: 1px solid #e2e8f0; padding: 4px;" />
+                    <!-- Inline SVG diagram illustrating the card movement logic -->
+                    <div style="display:flex;justify-content:center;margin-top:1rem;">
+                        <svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+                                    <path d="M0,0 L6,3 L0,6 Z" fill="#4c51bf"></path>
+                                </marker>
+                            </defs>
+                            <!-- grid squares -->
+                            <rect x="10" y="10" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <rect x="65" y="10" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <rect x="120" y="10" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <rect x="10" y="65" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <rect x="65" y="65" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <rect x="120" y="65" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <rect x="10" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <rect x="65" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <rect x="120" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
+                            <!-- arrows demonstrating movement and insertion of new cards -->
+                            <!-- from answered card (top-left) downwards -->
+                            <line x1="30" y1="50" x2="30" y2="110" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
+                            <!-- from answered card (top-left) to the right -->
+                            <line x1="50" y1="30" x2="110" y2="30" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
+                            <!-- from bottom-left along bottom row to the right (representing shifting of cards) -->
+                            <line x1="30" y1="140" x2="110" y2="140" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
+                            <!-- from bottom-right up (representing removal of the bottom-right card) -->
+                            <line x1="140" y1="160" x2="140" y2="110" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
+                        </svg>
+                    </div>
                 </div>
             `;
             showGameModal("Jak se hraje?", helpContent, "Zavřít", () => {});
