@@ -495,26 +495,30 @@
             display: flex;
             flex-direction: row;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
+            gap: 8px;
             width: 100%;
         }
         #end-game-button {
             font-size: 0.9rem;
             padding: 8px 12px;
-            /* Expand to fill the available width in the sidebar */
-            width: 100%;
+            /* Keep text on a single line but don't force full width.  The width will be controlled
+             * by flexbox rules in the sidebar so that the button can sit alongside the help
+             * button on one row. */
             white-space: nowrap;
         }
         /* The end game button uses the existing restart-button styles to be consistent */
 
         /* When the sidebar buttons are displayed in a row, make the help button compact and
-         * allow the end game button to take up the remaining space. */
+         * allow the end game button to take up the remaining horizontal space. */
         .sidebar #sidebar-buttons .help-button {
-            width: auto;
-            flex: 0 0 auto;
+            width: 40px;
+            flex: 0 0 40px;
         }
         .sidebar #sidebar-buttons #end-game-button {
             flex: 1 1 auto;
+            /* Remove any inherited width so it can flex-grow */
+            width: auto;
         }
 
     </style>
@@ -1054,7 +1058,12 @@ window.updateScoreDisplay();
                     <div style="display:flex;justify-content:center;margin-top:1rem;">
                         <svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
                             <defs>
+                                <!-- Arrowhead for the end of the path -->
                                 <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+                                    <path d="M0,0 L6,3 L0,6 Z" fill="#4c51bf"></path>
+                                </marker>
+                                <!-- Arrowheads for the intermediate points along the path -->
+                                <marker id="arrow-mid" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth">
                                     <path d="M0,0 L6,3 L0,6 Z" fill="#4c51bf"></path>
                                 </marker>
                             </defs>
@@ -1068,21 +1077,18 @@ window.updateScoreDisplay();
                             <rect x="10" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
                             <rect x="65" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
                             <rect x="120" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
-                            <!-- arrows demonstrating the snake-like movement of cards after answering -->
-                            <!-- top row movement from left to right -->
-                            <!-- downward movement from the answered card to the start of the second row -->
-                            <line x1="30" y1="50" x2="30" y2="90" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
-                            <line x1="50" y1="30" x2="140" y2="30" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
-                            <!-- move down from top-right to second row right -->
-                            <line x1="140" y1="30" x2="140" y2="90" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
-                            <!-- second row movement from right to left -->
-                            <line x1="140" y1="90" x2="30" y2="90" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
-                            <!-- move down from second row left to third row left -->
-                            <line x1="30" y1="90" x2="30" y2="145" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
-                            <!-- bottom row movement from left to right -->
-                            <line x1="30" y1="145" x2="140" y2="145" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
-                            <!-- final movement: removed card at bottom-right goes up -->
-                            <line x1="140" y1="145" x2="140" y2="90" stroke="#4c51bf" stroke-width="2" marker-end="url(#arrow)"></line>
+                            <!-- Polyline illustrating the snake-like movement.  The marker-mid creates
+                                 arrowheads at each bend, while marker-end adds an arrowhead at the
+                                 final point.  Points correspond to the centers of the grid cells.
+                                 Sequence: (top-left) → (top-mid) → (top-right) → (mid-right) →
+                                 (mid-mid) → (mid-left) → (bot-left) → (bot-mid) → (bot-right). -->
+                            <polyline points="30,30 85,30 140,30 140,85 85,85 30,85 30,140 85,140 140,140"
+                                      fill="none" stroke="#4c51bf" stroke-width="2"
+                                      marker-mid="url(#arrow-mid)" marker-end="url(#arrow)"></polyline>
+                            <!-- Arrow showing removal of the bottom-right card moving up to the second row
+                                 right position (the last card moves out of the grid). -->
+                            <line x1="140" y1="140" x2="140" y2="85" stroke="#4c51bf" stroke-width="2"
+                                  marker-end="url(#arrow)"></line>
                         </svg>
                     </div>
                 </div>
