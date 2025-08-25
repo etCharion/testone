@@ -477,28 +477,76 @@
             margin-top: 12px;
             display: flex;
             flex-direction: row;
-            align-items: center;
+            align-items: stretch; /* equal height buttons */
             justify-content: flex-start;
             gap: 12px;
             width: 100%;
-        }
-        #end-game-button {
-            font-size: 0.9rem;
-            padding: 8px 12px;
-            white-space: nowrap;
-            /* Remove the shadow in the default state so the button lays flat. The
-               shadow will appear only on hover via a separate rule. */
-            box-shadow: none;
+            min-height: 40px; /* consistent height */
         }
 
-        /* Add a shadow only when hovering over the end-game button */
-        #end-game-button:hover {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        /* Compact help button with unified padding and appearance */
+        .sidebar #sidebar-controls .help-button {
+            width: 40px;
+            min-width: 40px;
+            flex: 0 0 40px;
+            padding: 8px 4px !important;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background-color: #4c51bf;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 3px 7px rgba(0,0,0,0.1);
+            transition: background-color 0.2s, transform 0.1s;
         }
-        /* Expand the end game button to fill the row */
+
+        /* Expanding end-game button with unified padding */
         .sidebar #sidebar-controls #end-game-button {
             flex: 1 1 auto;
-            width: auto;
+            min-width: 0;
+            width: auto !important;
+            padding: 8px 12px !important;
+            font-size: 0.9rem !important;
+            white-space: nowrap;
+            margin-top: 0 !important;
+            align-self: auto !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #4c51bf;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 3px 7px rgba(0,0,0,0.1);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        /* Hover effects for both help and end-game buttons */
+        .sidebar #sidebar-controls .help-button:hover,
+        .sidebar #sidebar-controls #end-game-button:hover {
+            background-color: #3f44a9;
+            transform: translateY(-1px);
+        }
+
+        /* Responsive adjustments for the sidebar controls on narrow screens */
+        @media (max-width: 768px) {
+            #sidebar-controls {
+                gap: 8px;
+            }
+            .sidebar #sidebar-controls .help-button {
+                width: 35px;
+                min-width: 35px;
+                flex: 0 0 35px;
+                font-size: 0.8rem;
+            }
+            .sidebar #sidebar-controls #end-game-button {
+                font-size: 0.8rem !important;
+                padding: 6px 8px !important;
+            }
         }
 
     </style>
@@ -514,6 +562,9 @@
         </div>
         <!-- Controls: help and end buttons. Shown during gameplay. -->
         <div id="sidebar-controls" class="hidden">
+          <!-- Help button to open the game rules modal -->
+          <button id="help-button" class="help-button" title="Jak se hraje?">?</button>
+          <!-- End-game button to trigger final scoring and summary -->
           <button id="end-game-button" class="restart-button">Ukončit a vyhodnotit</button>
         </div>
       </aside>
@@ -743,6 +794,7 @@
 
         // Sidebar control buttons
         let endGameButton;
+        let helpButton;
         let sidebarButtons;
 
         // Modal elements
@@ -868,8 +920,9 @@
             numPlayersValueSpan = document.getElementById('num-players-value');
             flashcardSetSelect = document.getElementById('flashcard-set-select');
 
-            // Element for the end-game button in the sidebar and its container
+            // Elements for the help and end-game buttons in the sidebar and its container
             endGameButton = document.getElementById('end-game-button');
+            helpButton = document.getElementById('help-button');
             sidebarButtons = document.getElementById('sidebar-controls');
         }
 
@@ -1767,7 +1820,12 @@ window.updateScoreDisplay();
                 flashcardSetSelect.addEventListener('change', handleFlashcardSetChange);
             }
 
-            // Attach handler for the end-game button
+            // Attach handlers for the sidebar control buttons
+            if (helpButton) {
+                helpButton.addEventListener('click', () => {
+                    showHelpModal();
+                });
+            }
             if (endGameButton) {
                 endGameButton.addEventListener('click', () => {
                     showEndGameSummary();
