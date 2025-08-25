@@ -527,7 +527,7 @@
     <div class="text-4xl font-extrabold text-blue-800 mb-6"></div>
     <div id="main-layout" class="main-layout centered">
       <!-- Sidebar: scoreboard -->
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebar">
         <div id="all-players-score-display" class="score-display score-display--side">
           <span class="remaining-cards-display hidden" id="remaining-cards-display">Zbývá: -- kartiček</span>
         </div>
@@ -1094,6 +1094,28 @@ window.updateScoreDisplay();
             showGameModal("Jak se hraje?", helpContent, "Zavřít", () => {});
         }
 
+        /**
+         * Synchronize the height of the sidebar with the height of the card grid.
+         * On larger screens (desktop layout) this ensures that the bottom control
+         * buttons align with the last row of cards. On smaller screens the
+         * height constraint is removed.
+         */
+        function syncSidebarHeight() {
+            const sidebar = document.getElementById('sidebar');
+            const wrapper = document.querySelector('.grid-layout-wrapper');
+            if (!sidebar || !wrapper) return;
+            // Only adjust heights on wide screens where the layout is split into two columns
+            if (window.matchMedia('(min-width: 1025px)').matches) {
+                const h = wrapper.getBoundingClientRect().height;
+                sidebar.style.minHeight = `${h}px`;
+            } else {
+                sidebar.style.minHeight = '';
+            }
+        }
+
+        // Recalculate the sidebar height whenever the window is resized
+        window.addEventListener('resize', syncSidebarHeight);
+
         // Utility function to shuffle an array
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -1141,6 +1163,8 @@ window.updateScoreDisplay();
                 } else {
                     remainingCardsDisplay.classList.remove('hidden');
                 }
+            // Adjust the sidebar height after a new round starts
+            syncSidebarHeight();
         }
 
         // Updates the score and remaining cards displayed on the screen.
@@ -1279,6 +1303,9 @@ window.updateScoreDisplay();
                 }
                 if (cardGrid) cardGrid.appendChild(cardElement);
             }
+            // After rendering all nine cards, adjust the sidebar height so that
+            // the bottom control buttons align with the last row of cards.
+            syncSidebarHeight();
         }
 
         // Generates HTML content for the question and options to be used in the modal
@@ -1535,6 +1562,8 @@ window.updateScoreDisplay();
             currentPlayerIndex = (currentPlayerIndex + 1) % numPlayers;
             window.updateScoreDisplay();
             renderCardGrid();
+            // Adjust the sidebar height after moving to the next player
+            syncSidebarHeight();
         }
 
         /**
@@ -1798,7 +1827,9 @@ window.updateScoreDisplay();
                 });
             }
 
-            await loadFlashcards(currentFlashcardSetUrl); 
+            await loadFlashcards(currentFlashcardSetUrl);
+            // Adjust the sidebar height on initial load
+            syncSidebarHeight();
         };
   </script>
 </body>
