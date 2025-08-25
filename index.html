@@ -471,25 +471,7 @@
             display: none;
         }
 
-        /* Help and End Game buttons */
-        .help-button {
-            background-color: #4c51bf;
-            color: white;
-            border: none;
-            /* Smaller padding and rounded corners instead of a circle */
-            padding: 6px 10px;
-            border-radius: 8px;
-            /* Slightly larger font size to improve legibility while keeping the text on one line */
-            font-size: 0.9rem;
-            /* Do not force the help button to occupy the full width; its width will be
-             * controlled by flexbox rules in the sidebar. */
-            text-align: center;
-            cursor: pointer;
-            box-shadow: 0 3px 7px rgba(0,0,0,0.1);
-        }
-        .help-button:hover {
-            background-color: #3f44a9;
-        }
+        /* End Game button customization */
         /* Style for the sidebar control buttons container */
         #sidebar-controls {
             margin-top: 12px;
@@ -504,12 +486,16 @@
             font-size: 0.9rem;
             padding: 8px 12px;
             white-space: nowrap;
+            /* Remove the shadow in the default state so the button lays flat. The
+               shadow will appear only on hover via a separate rule. */
+            box-shadow: none;
         }
-        /* Compact help button and expanding end-game button inside the controls container */
-        .sidebar #sidebar-controls .help-button {
-            width: 40px;
-            flex: 0 0 40px;
+
+        /* Add a shadow only when hovering over the end-game button */
+        #end-game-button:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
+        /* Expand the end game button to fill the row */
         .sidebar #sidebar-controls #end-game-button {
             flex: 1 1 auto;
             width: auto;
@@ -528,7 +514,6 @@
         </div>
         <!-- Controls: help and end buttons. Shown during gameplay. -->
         <div id="sidebar-controls" class="hidden">
-          <button id="help-button" class="help-button" title="Jak se hraje?">?</button>
           <button id="end-game-button" class="restart-button">Ukončit a vyhodnotit</button>
         </div>
       </aside>
@@ -757,7 +742,6 @@
         let flashcardSetSelect;
 
         // Sidebar control buttons
-        let helpButton;
         let endGameButton;
         let sidebarButtons;
 
@@ -884,8 +868,7 @@
             numPlayersValueSpan = document.getElementById('num-players-value');
             flashcardSetSelect = document.getElementById('flashcard-set-select');
 
-            // Elements for the help and end-game buttons in the sidebar
-            helpButton = document.getElementById('help-button');
+            // Element for the end-game button in the sidebar and its container
             endGameButton = document.getElementById('end-game-button');
             sidebarButtons = document.getElementById('sidebar-controls');
         }
@@ -1784,10 +1767,7 @@ window.updateScoreDisplay();
                 flashcardSetSelect.addEventListener('change', handleFlashcardSetChange);
             }
 
-            // Attach handlers for the sidebar buttons after references are set
-            if (helpButton) {
-                helpButton.addEventListener('click', showHelpModal);
-            }
+            // Attach handler for the end-game button
             if (endGameButton) {
                 endGameButton.addEventListener('click', () => {
                     showEndGameSummary();
