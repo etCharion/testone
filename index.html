@@ -421,15 +421,13 @@
         .sidebar {
             width: 260px;
             flex-shrink: 0;
-    /* Display the sidebar as a column so that the scoreboard sits at the top and
-     * the control buttons can be pushed to the bottom. */
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    /* Align the sidebar with the top of the grid.  Use the same top margin as the
-     * grid so that the first score card aligns perfectly with the first row of
-     * cards. */
-    margin-top: 20px;
+            /* Use CSS grid to arrange the scoreboard and control buttons.  The first row
+               (1fr) takes up available space so the scoreboard stretches from the top,
+               and the second row (auto) houses the controls at the bottom. */
+            display: grid;
+            grid-template-rows: 1fr auto;
+            /* Align the sidebar with the top of the grid using the same top margin. */
+            margin-top: 20px;
         }
         .content { flex: 1; min-width: 0; }
         /* Scoreboard styling in side column */
@@ -445,7 +443,14 @@
         /* Responsive: revert to top layout on tablets/mobile */
         @media (max-width: 1024px) {
             .main-layout { flex-direction: column; }
-            .sidebar { position: static; width: 100%; }
+            /* On smaller screens, revert the sidebar back to a vertical flexbox so that
+               controls stack below the scoreboard. */
+            .sidebar {
+                position: static;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+            }
             .score-display--side {
                 flex-direction: row;
                 flex-wrap: wrap;
