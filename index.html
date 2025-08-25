@@ -485,38 +485,28 @@
         .help-button:hover {
             background-color: #3f44a9;
         }
-        /* Style adjustments for the sidebar button container and the end game button */
-        #sidebar-buttons {
-            /* Push the help and end buttons to the bottom of the sidebar so they align
-             * with the last row of cards.  margin-top:auto pushes this container to
-             * consume the remaining vertical space. */
-            margin-top: auto;
+        /* Style for the sidebar control buttons container */
+        #sidebar-controls {
+            margin-top: 12px;
             display: flex;
             flex-direction: row;
             align-items: center;
             justify-content: flex-start;
-            gap: 8px;
+            gap: 12px;
             width: 100%;
         }
         #end-game-button {
             font-size: 0.9rem;
             padding: 8px 12px;
-            /* Keep text on a single line but don't force full width.  The width will be controlled
-             * by flexbox rules in the sidebar so that the button can sit alongside the help
-             * button on one row. */
             white-space: nowrap;
         }
-        /* The end game button uses the existing restart-button styles to be consistent */
-
-        /* When the sidebar buttons are displayed in a row, make the help button compact and
-         * allow the end game button to take up the remaining horizontal space. */
-        .sidebar #sidebar-buttons .help-button {
+        /* Compact help button and expanding end-game button inside the controls container */
+        .sidebar #sidebar-controls .help-button {
             width: 40px;
             flex: 0 0 40px;
         }
-        .sidebar #sidebar-buttons #end-game-button {
+        .sidebar #sidebar-controls #end-game-button {
             flex: 1 1 auto;
-            /* Remove any inherited width so it can flex-grow */
             width: auto;
         }
 
@@ -531,8 +521,8 @@
         <div id="all-players-score-display" class="score-display score-display--side">
           <span class="remaining-cards-display hidden" id="remaining-cards-display">Zbývá: -- kartiček</span>
         </div>
-        <!-- Buttons for help and ending the game. Initially hidden; shown during gameplay. -->
-        <div id="sidebar-buttons" class="hidden">
+        <!-- Controls: help and end buttons. Shown during gameplay. -->
+        <div id="sidebar-controls" class="hidden">
           <button id="help-button" class="help-button" title="Jak se hraje?">?</button>
           <button id="end-game-button" class="restart-button">Ukončit a vyhodnotit</button>
         </div>
@@ -892,7 +882,7 @@
             // Elements for the help and end-game buttons in the sidebar
             helpButton = document.getElementById('help-button');
             endGameButton = document.getElementById('end-game-button');
-            sidebarButtons = document.getElementById('sidebar-buttons');
+            sidebarButtons = document.getElementById('sidebar-controls');
         }
 
         /**
@@ -1094,27 +1084,6 @@ window.updateScoreDisplay();
             showGameModal("Jak se hraje?", helpContent, "Zavřít", () => {});
         }
 
-        /**
-         * Synchronize the height of the sidebar with the height of the card grid.
-         * On larger screens (desktop layout) this ensures that the bottom control
-         * buttons align with the last row of cards. On smaller screens the
-         * height constraint is removed.
-         */
-        function syncSidebarHeight() {
-            const sidebar = document.getElementById('sidebar');
-            const wrapper = document.querySelector('.grid-layout-wrapper');
-            if (!sidebar || !wrapper) return;
-            // Only adjust heights on wide screens where the layout is split into two columns
-            if (window.matchMedia('(min-width: 1025px)').matches) {
-                const h = wrapper.getBoundingClientRect().height;
-                sidebar.style.minHeight = `${h}px`;
-            } else {
-                sidebar.style.minHeight = '';
-            }
-        }
-
-        // Recalculate the sidebar height whenever the window is resized
-        window.addEventListener('resize', syncSidebarHeight);
 
         // Utility function to shuffle an array
         function shuffleArray(array) {
@@ -1163,8 +1132,6 @@ window.updateScoreDisplay();
                 } else {
                     remainingCardsDisplay.classList.remove('hidden');
                 }
-            // Adjust the sidebar height after a new round starts
-            syncSidebarHeight();
         }
 
         // Updates the score and remaining cards displayed on the screen.
@@ -1303,9 +1270,6 @@ window.updateScoreDisplay();
                 }
                 if (cardGrid) cardGrid.appendChild(cardElement);
             }
-            // After rendering all nine cards, adjust the sidebar height so that
-            // the bottom control buttons align with the last row of cards.
-            syncSidebarHeight();
         }
 
         // Generates HTML content for the question and options to be used in the modal
@@ -1562,8 +1526,6 @@ window.updateScoreDisplay();
             currentPlayerIndex = (currentPlayerIndex + 1) % numPlayers;
             window.updateScoreDisplay();
             renderCardGrid();
-            // Adjust the sidebar height after moving to the next player
-            syncSidebarHeight();
         }
 
         /**
@@ -1828,8 +1790,6 @@ window.updateScoreDisplay();
             }
 
             await loadFlashcards(currentFlashcardSetUrl);
-            // Adjust the sidebar height on initial load
-            syncSidebarHeight();
         };
   </script>
 </body>
