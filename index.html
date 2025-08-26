@@ -749,7 +749,15 @@
         };
 
         const FLASHCARD_SETS = {
-            "Všehochuť": {
+            "1.rocnik_rany_vrcholny_stredovek": {
+                name: "Středověk až po reformaci",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQcFX-XElafI31HsHhWZ_e8xdCJREnUMvVkv3u0YG31yd7VAwhX2o8WnxKXrjZBkLhR3rreQaJtqVHO/pub?output=tsv"
+            },
+            "2.rocnik_rany_novovek_19_stoleti": {
+                name: "Raný novověk až po průmyslovou revoluci",
+                url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZkADdaKWqFzTm6EVGquT6ZIxKOFpPC4dmHzBMgaMP2-TZCE99Hhh2sX3aoGR7ohx3BF8VNGY8IrU6/pub?output=tsv"
+            },
+            "3.rocnik_moderni_dejiny": {
                 name: "Všehochuť",
                 url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTldhmt4IR1qDuF8WOJXsu0yDPRDV41RpLs4cLY3sVZUH9dXwJsiXL_rjyaJBakg2yn4NEh6f8vG5vB/pub?output=tsv"
             }
@@ -1099,17 +1107,14 @@ window.updateScoreDisplay();
                             <rect x="10" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
                             <rect x="65" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
                             <rect x="120" y="120" width="40" height="40" fill="#f5f5f5" stroke="#4a5568"></rect>
-                            <!-- Polyline illustrating the snake-like movement.  The marker-mid creates
-                                 arrowheads at each bend, while marker-end adds an arrowhead at the
-                                 final point.  Points correspond to the centers of the grid cells.
-                                 Sequence: (top-left) → (top-mid) → (top-right) → (mid-right) →
-                                 (mid-mid) → (mid-left) → (bot-left) → (bot-mid) → (bot-right). -->
-                            <polyline points="30,30 85,30 140,30 140,85 85,85 30,85 30,140 85,140 140,140"
+                            <!-- Path illustrating the serpentine movement: each row moves left-to-right.
+                                 The arrowhead at the end indicates the direction of the flow.  The
+                                 line drops down diagonally between rows, starting from the top-left
+                                 cell and finishing at the bottom-right.  No cross is drawn here;
+                                 removal of the bottom-right card is implied by the arrow. -->
+                            <polyline points="30,30 140,30 30,85 140,85 30,140 140,140"
                                       fill="none" stroke="#4c51bf" stroke-width="2"
-                                      marker-mid="url(#arrow-mid)" marker-end="url(#arrow)"></polyline>
-                            <!-- Cross marking the removal of the bottom-right card from the grid. -->
-                            <line x1="130" y1="130" x2="150" y2="150" stroke="#E53E3E" stroke-width="3"></line>
-                            <line x1="150" y1="130" x2="130" y2="150" stroke="#E53E3E" stroke-width="3"></line>
+                                      marker-end="url(#arrow)"></polyline>
                         </svg>
                     </div>
                 </div>
